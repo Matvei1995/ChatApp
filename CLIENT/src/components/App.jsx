@@ -1,23 +1,57 @@
-export function App({socket}) {
+import { useState } from "react";
 
-function handleClick(){
+
+export function App({ socket }) {
+  const [author, setAuthor] = useState(null);
+  const [message,setMessages] = useState([]);
+
+  function sendMessage(event) {
+    event.preventDefault();
+    const content = event.target.querySelector("#message").value;
     const msg = {
-        content : "Salut =)",
-        date : Date.now(),
-        author : "Matvei"
+      content: content,
+      date: Date.now(),
+      author: author,
+    };
+    socket.emit("send_msg", msg); // Envoi du message au serveur
   }
-  socket.emit("send_msg",msg);
+  function handleConnexion(event) {
+    event.preventDefault();
+    const author = event.target.querySelector("#author").value;
+    setAuthor(author);
 
-}
+    socket.on("new_msg",(newMessage)=>{
+      setMessages((prevMessages)=>[
+        ...prevMessages,
+        newMessage
+      ]);
+    })
+  }
 
+
+  const messageElements = message.map((message,i)=>{
+    const date = (new Date(message.date)).toUTCString();
+    return (
+    <div key={i} className="message">
+    <p>{message.content}</p>
+    <p>{message.author}</p>
+    <p>{date}</p>
+    </div>
+    );
+    });
   return (
-    
-    <>
+    <div>
       <h1>Client Chat</h1>
-      
-        
-        <button onClick={handleClick}>Envoyer</button>
+      <form onSubmit={handleConnexion} hidden={author != null}>
+        <input type="text" id="author" />
+        <button>Se connecter</button>
+      </form>
+      <form onSubmit={sendMessage} hidden={author == null}>
+        <input type="text" id="message" />
+        <button>Envoyer</button>
+      </form>
+      {messageElements}
      
-    </>
+    </div>
   );
 }
